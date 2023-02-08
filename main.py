@@ -5,10 +5,7 @@ from http.client import HTTPException
 from flask import Flask, jsonify, request, Blueprint
 # from werkzeug import secure_filename
 from werkzeug.utils import secure_filename
-
 import mysql.connector
-
-
 app = Flask(__name__)
 errors = Blueprint('errors', __name__)
 # app.config['UPLOAD_FOLDER']

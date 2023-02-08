@@ -3,48 +3,28 @@ import json
 import requests
 from http.client import HTTPException
 from flask import Flask, jsonify, request, Blueprint
-# from werkzeug import secure_filename
 from werkzeug.utils import secure_filename
 import mysql.connector
+
+
 app = Flask(__name__)
 errors = Blueprint('errors', __name__)
-# app.config['UPLOAD_FOLDER']
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
-mydb = mysql.connector.connect(
+
+dbConn = mysql.connector.connect(
     host="localhost",
     user="root",
     password="",
-    database="chullamane_learn"
+    database="shop_product"
 )
-
 
 def page_not_found(e):
     return jsonify({
         "message": "Page Not Found"
     }), 404
 
-
 app.register_error_handler(404, page_not_found)
-data = [
-    {
-        "id": 1,
-        "frameworks": "Django",
-        "year": 2005
-    },
-    {
-        "id": 2,
-        "frameworks": "Flas222k",
-        "year": 2010
-    },
-    {
-        "id": 3,
-        "frameworks": "Web2Py",
-        "year": 2007
-    }
-]
-
-
 @app.errorhandler(Exception)
 def handle_exception(e):
     # pass through HTTP errors
@@ -59,96 +39,80 @@ def handle_exception(e):
         "error":  e.args[0]
     }, 500
 
-# @app.errorhandler(Exception)
-# def handle_exception(error):
-#     message = [str(x) for x in error.args]
-#     # status_code = error.status_code
-#     success = False
-#     response = {
-#         'success': success,
-#         'error': {
-#             'type': error.__class__.__name__,
-#             'message': message
-#         }
-#     }
-#     return jsonify(response), 500
-
-# def handle_bad_request(e):
-#     return 'bad request!', 400
-
-# @app.errorhandler(Exception)
-# def handle_unexpected_error(error):
-#     # print(error.message)
-#     status_code = 500
-#     success = False
-#     response = {
-#         'success': success,
-#         'error': {
-#             'type': 'UnexpectedException',
-#             'message': 'An unexpected error has occurred.'
-#         }
-#     }
-
-#     return jsonify(response), status_code
-
-
 @app.route('/', methods=['GET'])
 def index():
+    return respone(200,None, "Welcome API") 
 
-    mycursor = mydb.cursor()
+@app.route('/AddProduct', methods=['POST'])
+def AddProduct():
+    mySqlConn = dbConn.cursor()
+    sql = ("BEGIN;"
+	"INSERT INTO product ( name_product, price_product, group_product, star_product, detail_product, qty_product, discount_product)"
+	"VALUES"
+	"( %s,%s,%s,%s,%s,%s,%s);"
+	"INSERT INTO image_product ( flag, url_product_image, path_product_image,product_id)"
+	"VALUES"
+	"( %s,%s,%s,(SELECT id FROM product ORDER BY id DESC LIMIT 1));"
+    "COMMIT;")
+    val =  ( 
+            request.form.get('name_product', type=str), 
+            request.form.get('price_product', type=int), 
+            request.form.get('group_product', type=int), 
+            request.form.get('star_product', type=int), 
+            request.form.get('name_product', type=str), 
+            request.form.get('qty_product', type=int),  
+            request.form.get('discount_product', type=float),  
+            request.form.get('flag', type=int), 
+            request.form.get('url_product_image', type=str), 
+            request.form.get('path_product_image', type=str), 
+        )
+    mySqlConn.execute(sql, val, multi=True)
+    multiSql = (mySqlConn.statement).split(";")
 
-    mycursor.execute("SELECT * FROM `manage_std` LIMIT 10")
+    check = 0
+    for res in multiSql:
+        mySqlConn.execute(res)
+        if(mySqlConn.rowcount > 0):
+            dbConn.commit()
+            check = check + 1
+    dbConn.commit()
+    if (check == 2):
+        return respone(200,None, "success")
+    else:
+        return respone(400,None, "failed")
 
-    myresult = mycursor.fetchall()
-    # jsonStr = json.dumps(myresult)
-
-    # print(jsonStr)
-    # print(type(myresult['id']))
-    # for x in myresult:
+@app.route('/GetProductAll', methods=['GET'])
+def GetProductAll():
+    # test = request.form.get('test', type=int)
+    mySqlConn = dbConn.cursor()
+    mySqlConn.execute("SELECT * FROM product a LEFT JOIN image_product b on a.id = b.product_id ORDER BY RAND()")
+    myResult = mySqlConn.fetchall()
     data = []
-    for row in myresult:
+    for row in myResult:
         data.append(
             {
-                "Id": row[0],
-                "id_std": row[1],
-                "branch": row[2],
-                "name": row[3]
+                mySqlConn.column_names[0]: row[0],
+                mySqlConn.column_names[1]: row[1],
+                mySqlConn.column_names[2]: row[2],
+                mySqlConn.column_names[3]: row[3],
+                mySqlConn.column_names[4]: row[4],
+                mySqlConn.column_names[5]: row[5],
+                mySqlConn.column_names[6]: row[6],
+                mySqlConn.column_names[8]: row[8],
+                mySqlConn.column_names[9]: row[9],
+                mySqlConn.column_names[10]: row[10],
+                mySqlConn.column_names[11]: row[11],
             }
         )
+    # test = request.form.get('test', type=int)
+    return respone(200, data, "")
 
-    # try:
-    # response = requests.get("/", allow_redirects=True)
-    test = request.form.get('test', type=int)
-    files = request.files.getlist("file")
-    for file in files:
-        file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                  app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
-
-    # if request.method == 'GET':
-        # return jsonify(q)
-    return respone(200, data, "", "")
-    # except Exception as e:
-    # message = [str(x) for x in e.args]
-    # return message;
-    # print(str(e))
-    # return respone(500,"","",str(e)),500
-
-
-def respone(status, data, msg, err):
-    try:
-        if err is None:
-            raise Exception("Sorry, no numbers below zero")
+def respone(status, data, msg):
         return {
-            "data": data,
-            "status": status,
-            "message": msg,
-        }, 200
-    except Exception as e:
-        return {
-            "status": 500,
-            "message": msg,
-            "error": e
-        }, 500
+                "data": data,
+                "status": status,
+                "message": msg,
+            }
 
 
 if __name__ == "__main__":

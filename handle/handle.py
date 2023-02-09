@@ -18,7 +18,7 @@ from dotenv import load_dotenv, find_dotenv
 
 class Handle:
     def page_not_found(e):
-        return jsonify(message="Page Not Found"), 404
+        return jsonify(msg="Page Not Found"), 404
 
     def handle_bad_request(e):
         json_str = str(e).split(":")
@@ -26,8 +26,8 @@ class Handle:
             data = (json_str[1].replace(" ", "")+":" +
                     (json_str[2].replace(" ", "")).replace("'", "")
                     ).replace("'", '"')
-            return jsonify(status=400, request=json.loads(data), message="Validate "+json_str[0]), 400
-        return jsonify(message="400 Bad Request"), 400
+            return jsonify(status=400, request=json.loads(data), msg="Validate "+json_str[0]), 400
+        return jsonify(msg="400 Bad Request"), 400
 
     def handle_bad_request(e):
         json_str = str(e).split(":")
@@ -35,11 +35,11 @@ class Handle:
             data = (json_str[1].replace(" ", "")+":" +
                     (json_str[2].replace(" ", "")).replace("'", "")
                     ).replace("'", '"')
-            return jsonify(status=400, request=json.loads(data), message="Validate "+json_str[0]), 400
-        return jsonify(message="400 Bad Request"), 400
+            return jsonify(status=400, request=json.loads(data), msg="Validate "+json_str[0]), 400
+        return jsonify(msg="400 Bad Request"), 400
 
     def method_not_allowed(e):
-        return jsonify(message="Method Not Allowed"), 405
+        return jsonify(msg="Method Not Allowed"), 405
 
     def Validate(validate, paramsName):
         if validate == None or validate == "":
@@ -48,3 +48,11 @@ class Handle:
             })
         else:
             return validate
+
+    def ValidateFile(validate, paramsName):
+        if str(validate) == None or str(validate) == "":
+            return abort(400, {
+                paramsName: 'null',
+            })
+        else:
+            return

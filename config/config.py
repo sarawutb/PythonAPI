@@ -19,8 +19,9 @@ import datetime
 import mimetypes
 import random
 import string
-
+import uuid
 from handle.handle import Handle
+import random as r
 
 
 class Config:
@@ -38,14 +39,16 @@ class Config:
         data = ""
         files = request.files.getlist('file')
         for index, file in enumerate(files, start=0):
-            if not (Handle.ValidateFile(str(file.filename), 'file')):
+            isFile = Handle.ValidateFile(str(file.filename), 'file')
+            if not (isFile):
                 basename = "images"
                 suffix = datetime.datetime.now().strftime(
-                    "%y%m%d_%H%M%S")  # e.g. 'mylogfile_120508_171442'
+                    "%y%m%d_%H%M%S")
                 # ext = get_mimetype(file.filename).split('/')
+                #  (''.join(random.choice(string.ascii_uppercase)for i in range(10)))
                 ext = file.mimetype.split('/')
                 filePath = "_".join(
-                    [basename, suffix, str(index), (''.join(random.choice(string.ascii_lowercase)for i in range(10)))])+("."+ext[1])
+                    [basename, suffix, str(index+1), str(Config.generate_uuid())])+("."+ext[1])
                 file.save(os.path.join(
                     app.config['UPLOAD_FOLDER'], filePath))
                 filesName.append(filePath)
@@ -56,6 +59,18 @@ class Config:
                     "filesName": filesName,
                     "UrlPath": filesPathUrl,
                 }
-            else:
-                return Handle.ValidateFile(str(file.filename))
+            # else:
+            #     return Handle.ValidateFile(str(file.filename))
         return data
+
+    def generate_uuid():
+        random_string = ''
+        random_str_seq = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        uuid_format = [8, 4, 4, 4, 12]
+        for n in uuid_format:
+            for i in range(0, n):
+                random_string += str(
+                    random_str_seq[r.randint(0, len(random_str_seq) - 1)])
+            if n != 12:
+                random_string += '-'
+        return random_string

@@ -42,7 +42,8 @@ class Handle:
         return jsonify(msg="Method Not Allowed"), 405
 
     def Validate(validate, paramsName):
-        if validate == None or validate == "":
+        print(paramsName)
+        if validate == None or validate == "" or paramsName == None:
             return abort(400, {
                 paramsName: 'null',
             })
@@ -50,7 +51,7 @@ class Handle:
             return validate
 
     def ValidateFile(validate, paramsName):
-        if str(validate) == None or str(validate) == "":
+        if str(validate) == None or str(validate) == "" or paramsName == None:
             return abort(400, {
                 paramsName: 'null',
             })
